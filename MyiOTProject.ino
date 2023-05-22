@@ -57,7 +57,7 @@ void loop() {
     Serial.println(data);
   }
   if (detectedValueFromSensor < 250) {
-    mystring = mystring + "Methane Range: " + detectedValueFromSensor;
+    mystring = mystring + "Methane Range Value: " + detectedValueFromSensor;
     nodemcu.println(mystring);
     Serial.println(mystring);
 
