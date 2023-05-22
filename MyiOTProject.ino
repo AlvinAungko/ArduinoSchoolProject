@@ -1,30 +1,16 @@
-#define BLYNK_PRINT Serial
-#include <BlynkSimpleEsp8266.h>
-#include <ESP8266WiFi.h>
-#include <WifiClient.h>
+
 #include <SoftwareSerial.h>
 
 
 SoftwareSerial nodemcu(8, 9);
-String sdata;
-char auth[] = "kvBuZuwcA_JGDj0DBMBlgXfqfe9-B_Lr";
-
-const char *ssid = "GUSTO_289";
-const char password = "Gusto@123";
-
 int pinRedLed = 12;
 int pinGreenLed = 11;
 int pinSensor = A5;
 int THRESHOLD = 250;
 int buzzer = 10;
-int rdata = 0;
-
-char redData;
-
+int detectedValueFromSensor = 0;
 String mystring;
-String sdata;
 
-BlynkTimer timer;
 
 void myTimerEvent() {
   // You can send any value at any time.
@@ -39,8 +25,6 @@ void setup() {
   pinMode(pinRedLed, OUTPUT);
   pinMode(pinGreenLed, OUTPUT);
   pinMode(pinSensor, INPUT);
-  Blynk.begin(auth, ssid, pass);
-  timer.setInterval(1000L, sensorvalue1);
 }
 
 void sensorvalue1() {
@@ -51,30 +35,16 @@ void sensorvalue1() {
 
 
 void loop() {
-
-
-  int rdata = analogRead(pinSensor);
+  int detectedValueFromSensor = analogRead(pinSensor);  // Data Read By The Sensor
   Serial.print("Methane Range: ");
-  Serial.println(rdata);
+  Serial.println(detectedValueFromSensor);
 
-  if (Serial.available() == 0) {
-    Blynk.run();
-    timer.run();  // Initiates BlynkTimer
-  }
-
-  if (Serial.available() > 0) {
-    redData = Serial.read();
-    myString = myString + redData;
-  }
-
-
-  if (rdata >= THRESHOLD) {
+  // If the value detected from the sensor increases above 250, this code will trigger
+  if (detectedValueFromSensor >= THRESHOLD) {
     digitalWrite(pinRedLed, HIGH);
     digitalWrite(pinGreenLed, LOW);
     digitalWrite(buzzer, HIGH);
-
     delay(50);
-
   } else {
     digitalWrite(pinRedLed, LOW);
     digitalWrite(pinGreenLed, HIGH);
@@ -86,13 +56,13 @@ void loop() {
     data = nodemcu.read();
     Serial.println(data);
   }
-  if (rdata < 250) {
-    mystring = mystring + "Methane Range: " + rdata;
+  if (detectedValueFromSensor < 250) {
+    mystring = mystring + "Methane Range: " + detectedValueFromSensor;
     nodemcu.println(mystring);
     Serial.println(mystring);
 
   } else {
-    mystring = "Food Spoiled";
+    mystring = "Food is Spoiled";
     nodemcu.println(mystring);
     Serial.println(mystring);
   }
