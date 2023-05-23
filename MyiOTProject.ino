@@ -1,66 +1,67 @@
 
+#include <Firebase_ESP_Client.h>
+#include <ArduinoJson.h>
 #include <SoftwareSerial.h>
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
 
+#define firebaseHost  "https://iotarduinoproj-default-rtdb.firebaseio.com/"
+#define firebaseAuth  "JzhzwGZNc3zM6g2wLFT4W0LvAkPvRfrIcNeADVuu"
+#define ssid  "GUSTO WIFI"
+#define password  "Gusto@123"
 
-SoftwareSerial nodemcu(8, 9);
-int pinRedLed = 12;
-int pinGreenLed = 11;
-int pinSensor = A5;
+FirebaseData fbdo;
+FirebaseConfig config;
+FirebaseAuth auth;
+int pinSensor = A0;
 int THRESHOLD = 250;
-int buzzer = 10;
 int detectedValueFromSensor = 0;
+unsigned long sendDataPrevMillis = 0;
+int count = 0;
 String mystring;
-
-
-// void myTimerEvent() {
-//   // You can send any value at any time.
-//   // Please don't send more that 10 values per second.
-//   Blynk.virtualWrite(V1, millis() / 1000);
-// }
+bool signupOK = false;
 
 void setup() {
   Serial.begin(9600);
-  nodemcu.begin(9600);
-  pinMode(buzzer, OUTPUT);
-  pinMode(pinRedLed, OUTPUT);
-  pinMode(pinGreenLed, OUTPUT);
+  WiFi.begin(ssid, password);
   pinMode(pinSensor, INPUT);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(300);
+  }
+  config.api_key = firebaseAuth;
+  config.database_url = firebaseHost;
+
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    Serial.println("ok");
+    signupOK = true;
+  }
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
 }
 
 
 void loop() {
+
   int detectedValueFromSensor = analogRead(pinSensor);  // Data Read By The Sensor
   Serial.print("Methane Range: ");
   Serial.println(detectedValueFromSensor);
+  
+  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 1000 || sendDataPrevMillis == 0)){
+    sendDataPrevMillis = millis();
 
-  // If the value detected from the sensor increases above 250, this code will trigger
-  if (detectedValueFromSensor >= THRESHOLD) {
-    digitalWrite(pinRedLed, HIGH);
-    digitalWrite(pinGreenLed, LOW);
-    digitalWrite(buzzer, HIGH);
-    delay(50);
-  } else {
-    digitalWrite(pinRedLed, LOW);
-    digitalWrite(pinGreenLed, HIGH);
-    digitalWrite(buzzer, LOW);
+    if (Firebase.RTDB.setInt(&fbdo, "food_status", detectedValueFromSensor)){
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
+    }
+    else {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+    }
+    
   }
 
-  if (nodemcu.available() > 0) {
-    char data;
-    data = nodemcu.read();
-    Serial.println(data);
-  }
-  if (detectedValueFromSensor < 250) {
-    mystring = mystring + "Methane Range Value: " + detectedValueFromSensor;
-    nodemcu.println(mystring);
-    Serial.println(mystring);
-
-  } else {
-    mystring = "Food is Spoiled";
-    nodemcu.println(mystring);
-    Serial.println(mystring);
-  }
-
-  mystring = "";
-  delay(1000);
 }
