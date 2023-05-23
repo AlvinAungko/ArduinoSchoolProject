@@ -12,11 +12,11 @@ int detectedValueFromSensor = 0;
 String mystring;
 
 
-void myTimerEvent() {
-  // You can send any value at any time.
-  // Please don't send more that 10 values per second.
-  Blynk.virtualWrite(V1, millis() / 1000);
-}
+// void myTimerEvent() {
+//   // You can send any value at any time.
+//   // Please don't send more that 10 values per second.
+//   Blynk.virtualWrite(V1, millis() / 1000);
+// }
 
 void setup() {
   Serial.begin(9600);
@@ -25,12 +25,6 @@ void setup() {
   pinMode(pinRedLed, OUTPUT);
   pinMode(pinGreenLed, OUTPUT);
   pinMode(pinSensor, INPUT);
-}
-
-void sensorvalue1() {
-  sdata = myString;
-  Blynk.virtualWrite(V12, sdata);
-  myString = "";
 }
 
 
